@@ -58,7 +58,6 @@ class CaDeer(object):
     def excel_read(self, excel_file):
         """Used to gather names, motility values, colors, and color range from an excel file that is passed in by the
 
-
             :param excel_file: File path of the Excel File
             :type excel_file: string
             """
@@ -128,7 +127,7 @@ class CaDeer(object):
         """Returns an array of strings that hold the values of colors used within the world and to be used by the
         matplotlib legend. User can add in a brown path by setting pathing=True.
 
-        :param pathing: Determines if the deer path should be added to the legened list
+        :param pathing: Determines if the deer path should be added to the legend list
         :type pathing: bool, optional
         :return: A string array of the colors used within the world.
         :rtype: ndArray
@@ -157,24 +156,14 @@ class CaDeer(object):
         # loop through and create a CA model from the original world
         self.ca_world = np.zeros(self.world.shape)
 
-        # used to simulate elif without else using an array
-        found = False
-
         # create RGB from heat map
         for i in range(self.length):
             for j in range(self.width):
-                for k in range(self.features):
-                    if self.world[i][j] < self.color_range[k] and not found:
-                        # create regions from noise
-                        self.ca_world[i][j] = self.color_range[k]
-                        # create RBG version from noise
-                        self.world_color[i][j] = self.colors[k]
-                        # skip until the next cycle
-                        found = True
-
-                    # check to see if we need to update the ability to find another color
-                    if k == self.features - 1:
-                        found = False
+                # creates array of indices that meet the condition
+                k = np.where(self.world[i][j] < self.color_range)
+                # use index
+                self.ca_world[i][j] = self.color_range[k[0][0]]
+                self.world_color[i][j] = self.colors[k[0][0]]
 
     def create_world(self, length=250, width=250, feature_list=None):
         """ Creates the Perlin Noise given user dimensions as well as feature list that will be used to color the world.
@@ -385,8 +374,7 @@ class CaDeer(object):
         if self.current_pos_y == self.length * -1 - 1:
             self.current_pos_y = np.remainder(self.current_pos_y, self.length)
 
-        # Marron RGB for previous spots for deer [128, 0, 0]
-        # buffer[prev_pos_x][prev_pos_y] = [128/255, 0/255, 0/255, 1]
+        # buffer
         buffer[prev_pos_x][prev_pos_y] = self.world_color[prev_pos_x][prev_pos_y]
 
         # use pink for current position [255, 0, 255]
@@ -525,6 +513,7 @@ class CaDeer(object):
         :type world: ndArray
         :param gray: Determines if the world should be shown in gray scale.
         :type gray: bool
+
         """
         plt.figure()
 
@@ -544,6 +533,7 @@ class CaDeer(object):
         :type pixel: ndArray
         :return rgba: Updated pixel value as a ndArray with 4 float elements
         :rtype rgba: ndArray
+
         """
 
         # check light mode
@@ -590,23 +580,6 @@ class CaDeer(object):
         plt.imshow(self.world_color)
 
         plt.show()
-
-    def break_it(self):
-        """ Used to test all positions of the world using the edge check function. Writes to a file "breakit.txt".
-        """
-
-        # open a file to check output checks
-        file1 = open("breakit.txt", "w")
-        for i in range(self.width):
-            for j in range(self.length):
-                check_grid = self.edge_check(x=i, y=j)
-                file1.write("({}, {} \n)".format(i, j))
-                if check_grid.shape[0] != 7:
-                    file1.write("shape[0] != 7 \n")
-                if check_grid.shape[1] != 7:
-                    file1.write("shape[1] != 7 \n")
-
-        file1.close()
 
     def edge_check(self, x, y):
         """ Determines which values of the world to use within the 7 by 7 viewing array given the current x and y
@@ -856,3 +829,20 @@ class CaDeer(object):
                 square[i][j] = range_index[square[i][j]]
         end = time.time()
         print(end - start)
+
+    def break_it(self):
+        """ Used to test all positions of the world using the edge check function. Writes to a file "breakit.txt".
+        """
+
+        # open a file to check output checks
+        file1 = open("breakit.txt", "w")
+        for i in range(self.width):
+            for j in range(self.length):
+                check_grid = self.edge_check(x=i, y=j)
+                file1.write("({}, {} \n)".format(i, j))
+                if check_grid.shape[0] != 7:
+                    file1.write("shape[0] != 7 \n")
+                if check_grid.shape[1] != 7:
+                    file1.write("shape[1] != 7 \n")
+
+        file1.close()
