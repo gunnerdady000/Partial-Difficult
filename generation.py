@@ -2,11 +2,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import noise
-import time
+import winsound
 from numba import jit
 from matplotlib import cm
 import matplotlib.patches as mpatches
-
+import matplotlib.animation as animation
+from matplotlib.animation import FFMpegWriter
 
 class CaDeer(object):
     """This is a Cellular Automata Class that is be used to check motility values of deer. The use of Perlin Noise
@@ -55,14 +56,14 @@ class CaDeer(object):
         color = cm.get_cmap('gray')
         self.cmap = color.reversed()
 
-    def excel_read(self, excel_file):
+    def excel_read(self, input_excel_file_name):
         """Used to gather names, motility values, colors, and color range from an excel file that is passed in by the
 
-            :param excel_file: File path of the Excel File
-            :type excel_file: string
-            """
+        :param input_excel_file_name: File path of the Excel File
+        :type input_excel_file_name: string
+        """
 
-        xl = pd.ExcelFile(excel_file)
+        xl = pd.ExcelFile(input_excel_file_name)
 
         # get the data frame
         df = xl.parse(0, skiprows=0)
@@ -78,39 +79,32 @@ class CaDeer(object):
         colors = data[:, 2]
         colors = np.asarray([colors[i].replace(' ', '') for i in range(colors.size)])
         colors = np.asarray([np.fromstring(colors[i], dtype=int, sep=',') for i in range(colors.size)])
-        self.colors = np.divide(colors, 255)
+        self.colors = colors
 
         # get the color range
         self.color_range = data[:, 3]
 
-    def ca_setup(self, motility_values=None, light_mode=False):
-        """Used to setup the starting position of the deer within the simulated world, as well as takes in the
-        motility values of the colors used within the generated world. The user may also determine if light mode should
-        be used within the output of the generated world.
+    def excel_write(self, path_taken, excel_output_name, motilities_taken):
+        """Outputs pathing data that the deer took into an excel sheet showing the terrain name and the motility
+        assigned to the terrain.
 
-        :param motility_values: ndArray of floats that are the actual motility values, Must Match the number of
-        features. Default is None.
-        :type motility_values: ndArray, optional
-        :param light_mode: Used to set the output of the RGBA. light_mode = True, RGBA pixels will become more
-        transparent as the deer move to the same pixel. light_mode = False, RGBA pixels become less transparent
-        as the deer move to the same pixel. Default is False.
-        :type light_mode: bool, Optional
+            :param path_taken: Terrain path that was taken by the deer through the simulation.
+            :type path_taken: List
+            :param excel_output_name: Name of the Excel file the user wishes to output data from the simulation.
+            :type excel_output_name: str
+            :param motilities_taken: Motility values of each terrain feature that was taken by the deer throughout the
+            simulation.
+            :type motilities_taken: List
+            """
+
+        df = pd.DataFrame({'Terrain': path_taken, 'Motility': motilities_taken})
+        writer = pd.ExcelWriter(excel_output_name + '.xlsx')
+        df.to_excel(writer)
+        writer.save()
+
+    def ca_setup(self):
+        """Used to setup the starting position of the deer within the simulated world.
         """
-
-        self.motility_values = motility_values
-
-        # check motility_values
-        if motility_values is not None:
-            if motility_values.size != self.features:
-                print("Motility values have been set to default. Please enter motility values that match the number "
-                      "of features.")
-                self.default()
-        else:
-            self.default()
-
-        # create dictionary to speed up the program, 1500^2 resulted in a 77% speedup
-        range_index = dict(zip(self.color_range, self.motility_values))
-        self.range_dictionary = {float(key): range_index[key] for key in range_index}
 
         # starting values must not be on the edges of the world... for now
         self.starting_pos_x = np.random.randint(1, self.length - 1)
@@ -119,9 +113,6 @@ class CaDeer(object):
         # set current position to starting position
         self.current_pos_x = self.starting_pos_x
         self.current_pos_y = self.starting_pos_y
-
-        # determines the output of the pathing
-        self.light_mode = light_mode
 
     def color_append(self, pathing=True):
         """Returns an array of strings that hold the values of colors used within the world and to be used by the
@@ -165,16 +156,13 @@ class CaDeer(object):
                 self.ca_world[i][j] = self.color_range[k[0][0]]
                 self.world_color[i][j] = self.colors[k[0][0]]
 
-    def create_world(self, length=250, width=250, feature_list=None):
-        """ Creates the Perlin Noise given user dimensions as well as feature list that will be used to color the world.
+    def create_world(self, length=250, width=250):
+        """ Creates the Perlin Noise given user dimensions.
 
         :param length: Sets the length of the world
         :type length: int, optional
         :param width: Sets the width of the world
         :type width: int, optional
-        :param feature_list: Used to set the features of the world. Must be ndArray object that contains two ndArray's,
-        that contain the RGB color array and the color range values.
-        :type feature_list: object
         """
 
         # number of pixels of the world for a set length
@@ -199,9 +187,6 @@ class CaDeer(object):
                 self.world[i][j] = noise.pnoise2(i / self.scale, j / self.scale, self.octaves, self.persistence,
                                                  self.lacunarity, self.length, self.width, self.base)
 
-        # collect the needed colors and ranges
-        self.feature_fill(feature_list)
-
     def default(self):
         """ Provides the default values for the features, colors, color_range, motility_values, and names. Default
         settings create a world with 5 features using the barren, water, pasture, spruce, and mixed confir values.
@@ -209,52 +194,120 @@ class CaDeer(object):
 
         # default of 5 features
         self.features = 5
+
         # default of 5 colors
-        self.colors = [[240 / 255, 230 / 255, 140 / 255, 1], [65 / 255, 105 / 255, 225 / 255, 1],
-                       [34 / 255, 139 / 255, 34 / 255, 1],
-                       [139 / 255, 137 / 255, 137 / 255, 1], [255 / 255, 250 / 255, 250 / 255, 1]]
+        self.colors = [[240 / 255, 230 / 255, 140 / 255], [65 / 255, 105 / 255, 225 / 255],
+                       [34 / 255, 139 / 255, 34 / 255],
+                       [139 / 255, 137 / 255, 137 / 255], [255 / 255, 250 / 255, 250 / 255]]
+
         # default of 5 color ranges
         self.color_range = [-0.05, 0, 0.2, 0.36, 1]
-        # default of 5 molitity values
+
+        # default of 5 motility values
         self.motility_values = [0.94, 1.02, 0.46, 2.33, 3.12]
+
         # default of 5 names
         self.names = ['barren', 'water', 'pasture', 'spruce', 'mixed confir']
-        # default dictionary
-        range_index = dict(zip(self.color_range, self.motility_values))
-        self.range_dictionary = {float(key): range_index[key] for key in range_index}
 
-    def feature_fill(self, feature_list=None):
-        """ Checking function that takes the feature list array that converts the object type into separate arrays used
-        for creating the color and the color range values. Will use the default values if the size of the color or color
-        range arrays do not match.
+    def gather_features(self, output_excel_name, light_mode=False, input_excel_name=None, color_range=None, colors=None,
+                        motility_values=None, terrain_names=None):
+        """ This function gathers all needed values used for coloring in the world as well as running the simulation.
+            User must provide the name of the output name of the excel file. All other choices must match the number of
+            features that was used in class creation.
 
-        :param feature_list: Used to set the features of the world. Must be ndArray object that contains two ndArray's,
-        that contain the RGB color array and the color range values.
-        :type feature_list: object
+            :param output_excel_name: Used to name the output excel file name.
+            :type output_excel_name: string
+            :param light_mode: Used to determine if the RGBA will either get less transparent or more transparent.
+            :type light_mode: bool, optional
+            :param input_excel_name: File path/name of the excel file that provides the color_range, colors,
+            motility_values, and terrain names. Must match the number of features for each variable.
+            :type input_excel_name: string, optional
+            :param color_range: Holds the values to determine cutoff values for RGBA. Must match the number of features.
+            :type color_range: ndArray, optional
+            :param colors: Holds the RGB values that the user wishes to use to color the world. Must be a ndArray
+            composed of 3-int ndArrays. Example ndArray([[0,0,0], [255,255,255]]). Must match the number of
+            features and ints must be range from 0-255 not 0-1.
+            :type colors: ndArray, optional
+            :param motility_values: Holds the motility values of each terrain type, which will be used when the
+            simulated deer makes movement choices. Must match number of features
+            :type motility_values: ndArray, optional
+            :param terrain_names: Holds the names of the terrain that are used within the simulation. Must match the
+            number of features.
+            :type terrain_names: string, optional
+            """
+
+        # save string name for later
+        self.output_excel_name = output_excel_name
+
+        # save for later functions choices
+        self.light_mode = light_mode
+
+        if input_excel_name is not None:
+            self.excel_read(input_excel_name)
+        else:
+
+            if color_range is None:
+                self.default()
+            else:
+                self.color_range = color_range
+                if len(self.color_range) != self.features:
+                    print("Default values of 5 features has been selected. "
+                          "Please enter number of color range that matches the number of features.")
+                    self.default()
+
+            if colors is None:
+                self.default()
+            else:
+                self.colors = colors
+                if self.colors.shape[0] != self.features:
+                    print("Default values of 5 features has been selected. "
+                          "PLease enter number of colors that matches the number of features.")
+                    self.default()
+
+            if motility_values is None:
+                self.default()
+            else:
+                self.motility_values = motility_values
+                if self.motility_values.size != self.features:
+                    print("Motility values have been set to default. Please enter motility values that match the "
+                          "number of features.")
+                    self.default()
+
+            if terrain_names is None:
+                self.default()
+            else:
+                self.names = terrain_names
+                if len(self.names) != self.features:
+                    print("Default values have been set. Please enter an equal amount of names to features.")
+                    self.default()
+
+        self.rgb_to_rgba()
+        self.create_dictionary()
+
+    def rgb_to_rgba(self):
+        """ Used to turn the user inputted RGB values, between 0-255 into RGBA values between 0-1.
         """
 
-        # returns the colors needed to color the map and the values to check given the colors wanted
-        if feature_list is not None:
+        colors = np.divide(self.colors, 255)
 
-            # color size check
-            self.colors = np.copy(feature_list[0])
+        if self.light_mode:
+            apparent_value = np.ones([self.features, 1])
+        else:
+            apparent_value = np.add(np.zeros([self.features, 1]), 0.1)
 
-            if self.colors.shape[0] != self.features:
-                print("Default values of 5 features has been selected. "
-                      "PLease enter number of colors that matches the number of features.")
-                self.default()
+        # add either 1's or 0's to the color array to make it RGBA
+        self.colors = np.hstack((colors, apparent_value))
 
-            # color range check
-            self.color_range = np.copy(feature_list[1]).reshape((feature_list[1].size,))
+    def create_dictionary(self):
+        """ Used to create dictionaries to increase search time within the simulation.
+        """
 
-            if len(self.color_range) != self.features:
-                print("Default values of 5 features has been selected. "
-                      "PLease enter number of color range that matches the number of features.")
-                self.default()
+        # create dictionary to speed up the program, 1500^2 resulted in a 77% speedup
+        dict_index = dict(zip(self.color_range, self.motility_values))
+        self.motility_dictionary = {float(key): dict_index[key] for key in dict_index}
 
-        else:  # yellow,          blue,            green,         gray,           white
-            self.colors = [[240, 230, 140], [65, 105, 225], [34, 139, 34], [139, 137, 137], [255, 250, 250]]
-            self.color_range = [-0.05, 0, 0.2, 0.36, 1]
+        dict_index = dict(zip(self.color_range, self.names))
+        self.names_dictionary = {float(key): dict_index[key] for key in dict_index}
 
     def moore_neighborhood(self, square):
         """ Uses a moore neighborhood to determine which new position to move the deer based off of the average of the
@@ -264,6 +317,7 @@ class CaDeer(object):
         :param square: Moore neighborhood array of floats, must be a 3x3 ndArray.
         :type square: ndArray
         """
+
         # default for current motility
         current_motility = 100.0
         self.next_position_y = 0
@@ -297,6 +351,7 @@ class CaDeer(object):
 
         :param square: Extended moore neighborhood ndArray of floats, must be 7 by 7.
         :type square: ndArray
+
         """
 
         # Python memory hack making me do this :'/
@@ -305,7 +360,7 @@ class CaDeer(object):
         # convert from the heat map values to the respective motility values
         for i in range(len(square[0])):
             for j in range(len(square[0])):
-                square[i][j] = self.range_dictionary[square[i][j]]
+                square[i][j] = self.motility_dictionary[square[i][j]]
 
         # front view
         front_view = np.sum(square[0:2, 0:7])
@@ -364,6 +419,7 @@ class CaDeer(object):
         :type prev_pos_x: int
         :param prev_pos_y: Previous position of the deer on the y-axis
         :type prev_pos_y: int
+
         """
         # needed for video
         plt.clf()
@@ -382,8 +438,14 @@ class CaDeer(object):
 
         # add in location and iteration/time passed
         string = "t {} \n (x,y): ({},{})\n s {} o {} p {} l {} b {} f {}".format(t,
-                np.remainder(self.current_pos_x, self.width), np.remainder(self.current_pos_y, self.length), self.scale,
-                self.octaves, np.round(self.persistence, 3), np.round(self.lacunarity, 3), self.base, self.features
+                                                                                 np.remainder(self.current_pos_x,
+                                                                                              self.width),
+                                                                                 np.remainder(self.current_pos_y,
+                                                                                              self.length), self.scale,
+                                                                                 self.octaves,
+                                                                                 np.round(self.persistence, 3),
+                                                                                 np.round(self.lacunarity, 3),
+                                                                                 self.base, self.features
                                                                                  )
 
         # plot the updated time/iteration and current coordinates of the deer
@@ -405,30 +467,34 @@ class CaDeer(object):
         # use to determine the time between each iteration
         plt.pause(0.3)
 
-    def pathing(self, time, live_update=False, names=None):
+    def pathing(self, time, live_update=False, encoding=None, mpfour_output=None):
         """ Given a set amount of iterations this function simulates the deer within the generated world. The use of
-        live_update allows the user to see the deer move after each iteration. User must provide a list of the names
-        that match the number of features.
+        live_update allows the user to see the deer move after each iteration. User can output a mp4 video given a
+        name/address of the save file. Use encoding for faster performance assuming the user's computer allows for
+        matplotlib encoding types found here https://ffmpeg.org/doxygen/2.4/group__lavc__encoding.html
 
         :param time: Total amount of iterations to run the simulation
         :type time: int
         :param live_update: Determines if the simulation should be shown live
         :type live_update: bool
-        :param names: List of names for the features. Must match the number of features
-        :type names: ndArray
+        :param encoding: Determines if the user wants to encode the
+        :type encoding: string
+        :param mpfour_output: Determines name and address of mp4 output
+        :type mpfour_output: string
         """
+
+        # get starting positions
+        self.ca_setup()
+
+        # stop user from slowing the process of mp4 output
+        if mpfour_output is not None:
+            live_update = False
+
         # make a copy of the world
         buffer = np.copy(self.world_color)
 
-        # name size check
-        if names is not None:
-            if len(names) != self.features:
-                print("Default values have been set. Please enter an equal amount of names to features.")
-                self.default()
-            else:
-                self.names = names
-        else:
-            self.default()
+        # holds the x,y coordinates of the path taken by the deer
+        path_taken = []
 
         # clear up strings by adding path and deer
         motility = self.string_names()
@@ -450,13 +516,25 @@ class CaDeer(object):
             plt.ion()
             plt.figure()
 
+        if mpfour_output is not None:
+            self.ims = []
+            writer = animation.FFMpegWriter(fps=30, codec=encoding)
+            fig = plt.figure()
+            plt.ion()
+
         # loop through the iterations known as time
         for t in range(time):
-
             # output the deer on the colored world
             if live_update:
                 self.live_updater(buffer=buffer, t=t, colors=colors, motility=motility,
                                   prev_pos_x=prev_pos_x, prev_pos_y=prev_pos_y)
+
+            if mpfour_output is not None:
+                self.mp4(buffer=buffer, t=t, colors=colors, motility=motility,
+                         prev_pos_x=prev_pos_x, prev_pos_y=prev_pos_y)
+
+            # add previous position of the deer to a list
+            path_taken.append([prev_pos_x, prev_pos_y])
 
             # update the RGBA world with current position of the world
             self.world_color[prev_pos_x][prev_pos_y] = self.alpha_change(self.world_color[prev_pos_x][prev_pos_y])
@@ -477,14 +555,32 @@ class CaDeer(object):
 
             self.current_pos_x = np.remainder(self.current_pos_x, self.length)
             self.current_pos_y = np.remainder(self.current_pos_y, self.width)
+            print("\rTime: {:.2f} ".format(t/time * 100), end="")
+
+        print("\r100%")
 
         if live_update:
             # used to end the video format
             plt.ioff()
             plt.close()
 
+        if mpfour_output is not None:
+            ani = animation.ArtistAnimation(fig, self.ims, interval=500, blit=True)
+            ani.save(mpfour_output+'.mp4', writer=writer)
+
         self.output_world(self.world_color)
         self.path_map()
+
+        terrain_path = []
+        motilities_taken = []
+
+        for i in range(len(path_taken)):
+            x = path_taken[i][0]
+            y = path_taken[i][1]
+            terrain_path.append(self.names_dictionary[self.ca_world[x][y]])
+            motilities_taken.append(self.motility_dictionary[self.ca_world[x][y]])
+
+        self.excel_write(path_taken=terrain_path, excel_output_name=self.output_excel_name, motilities_taken=motilities_taken)
 
     def string_names(self):
         """ Appends the deer to the name array and returns a list of strings of the motility values.
@@ -515,7 +611,15 @@ class CaDeer(object):
         :type gray: bool
 
         """
+
         plt.figure()
+
+        # add in location and iteration/time passed
+        string = "s {} o {} p {} l {} b {} f {}".format(self.scale, self.octaves, np.round(self.persistence, 3),
+                                                        np.round(self.lacunarity, 3), self.base, self.features)
+
+        # plot the updated time/iteration and current coordinates of the deer
+        plt.title(string)
 
         if gray is True:
             print("Grayscale")
@@ -592,7 +696,9 @@ class CaDeer(object):
         :return square: 7 by 7 extended moore neighborhood with the current deer position index at the middle of the
         array
         :rtype square: ndArray
+
         """
+
         # check to see if indices are outside of the array
         if x + 4 > self.length and y + 4 > self.width:
             square = self.bottom_right_corner(x, y)
@@ -626,11 +732,12 @@ class CaDeer(object):
         :return : 7 by 7 extended moore neighborhood with the current deer position index at the middle of the
         array
         :rtype : ndArray
+
         """
         # get the left half
-        left_half = self.ca_world[x-3:x+4, y-3:self.length]
+        left_half = self.ca_world[x - 3:x + 4, y - 3:self.length]
         # get the right half
-        right_half = self.ca_world[x-3:x+4, 0:np.remainder(y+4, self.length)]
+        right_half = self.ca_world[x - 3:x + 4, 0:np.remainder(y + 4, self.length)]
         # return the total
         return np.hstack((left_half, right_half))
 
@@ -648,15 +755,15 @@ class CaDeer(object):
         """
 
         # get the right half
-        right_half = self.ca_world[x-3:x+4, 0:y+4]
+        right_half = self.ca_world[x - 3:x + 4, 0:y + 4]
         # get the left half
-        left_half = self.ca_world[x-3:x+4, np.remainder(y-3, self.length):self.length]
+        left_half = self.ca_world[x - 3:x + 4, np.remainder(y - 3, self.length):self.length]
         # return the total
         return np.hstack((left_half, right_half))
 
     def upper(self, x, y):
         """ Finds the overlap given the current position is on the top side of the world array. Returns the 7 by 7
-                array used by the moore neighborhood.
+            array used by the moore neighborhood.
 
         :param x: Current x position of the deer
         :type x: int
@@ -668,9 +775,9 @@ class CaDeer(object):
         """
 
         # get lower half
-        lower_half = self.ca_world[0:x+4, y-3:y+4]
+        lower_half = self.ca_world[0:x + 4, y - 3:y + 4]
         # get the upper half
-        upper_half = self.ca_world[np.remainder(x-3, self.width):self.width, y-3:y+4]
+        upper_half = self.ca_world[np.remainder(x - 3, self.width):self.width, y - 3:y + 4]
         # return the total
         return np.vstack((upper_half, lower_half))
 
@@ -688,9 +795,9 @@ class CaDeer(object):
         """
 
         # gather upper half
-        upper_half = self.ca_world[x-3:self.width, y-3:y+4]
+        upper_half = self.ca_world[x - 3:self.width, y - 3:y + 4]
         # gather lower half
-        lower_half = self.ca_world[0:np.remainder(x+4, self.width), y-3:y+4]
+        lower_half = self.ca_world[0:np.remainder(x + 4, self.width), y - 3:y + 4]
         # return the upper and lower
         return np.vstack((upper_half, lower_half))
 
@@ -708,15 +815,16 @@ class CaDeer(object):
         """
 
         # get lower right quarter
-        lower_right_quarter = self.ca_world[np.remainder(x-3, self.width):self.width, 0:np.remainder(y+4, self.length)]
+        lower_right_quarter = self.ca_world[np.remainder(x - 3, self.width):self.width,
+                              0:np.remainder(y + 4, self.length)]
         # get upper right quarter
-        upper_right_quarter = self.ca_world[0:x+4, 0:np.remainder(y+4, self.length)]
+        upper_right_quarter = self.ca_world[0:x + 4, 0:np.remainder(y + 4, self.length)]
         # right side
         right_half = np.vstack((upper_right_quarter, lower_right_quarter))
         # lower left quarter
-        lower_left_quarter = self.ca_world[0:x+4, y-3:self.length]
+        lower_left_quarter = self.ca_world[0:x + 4, y - 3:self.length]
         # upper left quarter
-        upper_left_quarter = self.ca_world[np.remainder(x-3, self.width):self.width, y-3:self.length]
+        upper_left_quarter = self.ca_world[np.remainder(x - 3, self.width):self.width, y - 3:self.length]
         # left side
         left_half = np.vstack((upper_left_quarter, lower_left_quarter))
         # combine the sides together
@@ -738,13 +846,14 @@ class CaDeer(object):
         # get the upper right quarter
         upper_right_quarter = self.ca_world[x - 3:self.width, 0:y + 4]
         # get the bottom right quarter
-        lower_right_quarter = self.ca_world[0:np.remainder(x + 4, self.width), 0:y+4]
+        lower_right_quarter = self.ca_world[0:np.remainder(x + 4, self.width), 0:y + 4]
         # right half
         right_half = np.vstack((upper_right_quarter, lower_right_quarter))
         # bottom left quarter
-        lower_left_quarter = self.ca_world[0:np.remainder(x+4, self.width), np.remainder(y-3, self.length): self.length]
+        lower_left_quarter = self.ca_world[0:np.remainder(x + 4, self.width),
+                             np.remainder(y - 3, self.length): self.length]
         # get the upper left quarter
-        upper_left_quarter = self.ca_world[x - 3:self.width, np.remainder(y-3, self.length):self.length]
+        upper_left_quarter = self.ca_world[x - 3:self.width, np.remainder(y - 3, self.length):self.length]
         # create the left half
         left_half = np.vstack((upper_left_quarter, lower_left_quarter))
         # completed 7 by 7 square
@@ -801,34 +910,11 @@ class CaDeer(object):
         lower_left_quarter = self.ca_world[0:x + 4, np.remainder(y - 3, self.length): self.length]
         # upper left quarter
         upper_left_quarter = self.ca_world[np.remainder(x - 3, self.width):self.width,
-                                       np.remainder(y - 3, self.length):self.length]
+                             np.remainder(y - 3, self.length):self.length]
         # left side
         left_half = np.vstack((upper_left_quarter, lower_left_quarter))
         # combine the sides together
         return np.hstack((left_half, right_half))
-
-    def test1(self):
-        square = np.copy(self.ca_world)
-
-        start = time.time()
-        for i in range(self.width):
-            for j in range(self.length):
-                for k in range(self.features):
-                    if square[i][j] == self.color_range[k]:
-                        square[i][j] = self.motility_values[k]
-        end = time.time()
-        print(end - start)
-
-    def test2(self):
-        range_index = {float(key): self.range_dictionary[key] for key in self.range_dictionary}
-        square = np.copy(self.ca_world)
-
-        start = time.time()
-        for i in range(self.width):
-            for j in range(self.length):
-                square[i][j] = range_index[square[i][j]]
-        end = time.time()
-        print(end - start)
 
     def break_it(self):
         """ Used to test all positions of the world using the edge check function. Writes to a file "breakit.txt".
@@ -846,3 +932,45 @@ class CaDeer(object):
                     file1.write("shape[1] != 7 \n")
 
         file1.close()
+
+    def mp4(self, buffer, t, colors, motility, prev_pos_x, prev_pos_y):
+
+        if self.current_pos_x == self.width * -1 - 1:
+            self.current_pos_x = np.remainder(self.current_pos_x, self.width)
+
+        if self.current_pos_y == self.length * -1 - 1:
+            self.current_pos_y = np.remainder(self.current_pos_y, self.length)
+
+        # buffer
+        buffer[prev_pos_x][prev_pos_y] = self.world_color[prev_pos_x][prev_pos_y]
+
+        # use pink for current position [255, 0, 255]
+        buffer[self.current_pos_x][self.current_pos_y] = [255 / 255, 0 / 255, 255 / 255, 1]
+
+        # add in location and iteration/time passed
+        string = "t {} \n (x,y): ({},{})\n s {} o {} p {} l {} b {} f {}".format(t,
+                                                                                 np.remainder(self.current_pos_x,
+                                                                                              self.width),
+                                                                                 np.remainder(self.current_pos_y,
+                                                                                              self.length), self.scale,
+                                                                                 self.octaves,
+                                                                                 np.round(self.persistence, 3),
+                                                                                 np.round(self.lacunarity, 3),
+                                                                                 self.base, self.features
+                                                                                 )
+
+        # plot the updated time/iteration and current coordinates of the deer
+        plt.title(string)
+
+        # create the legend box with names of each color as well the as the motility values
+        patches = [mpatches.Patch(color=colors[i], label='{:^5} {:>10}'.format(self.names[i], motility[i])) for i in
+                   range(len(self.names))]
+
+        # plot the legend box
+        plt.legend(handles=patches, bbox_to_anchor=(1.05, 0.0, 0.3, 1), loc=2, borderaxespad=0.1)  # , mode='expand')
+
+        # plot the buffer world image
+        im = plt.imshow(buffer)
+
+        # add to image array
+        self.ims.append([im])
