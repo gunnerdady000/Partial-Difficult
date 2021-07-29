@@ -2,12 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import noise
-import winsound
-from numba import jit
 from matplotlib import cm
 import matplotlib.patches as mpatches
 import matplotlib.animation as animation
-from matplotlib.animation import FFMpegWriter
+
 
 class CaDeer(object):
     """This is a Cellular Automata Class that is be used to check motility values of deer. The use of Perlin Noise
@@ -520,7 +518,6 @@ class CaDeer(object):
             self.ims = []
             writer = animation.FFMpegWriter(fps=30, codec=encoding)
             fig = plt.figure()
-            plt.ion()
 
         # loop through the iterations known as time
         for t in range(time):
@@ -555,9 +552,9 @@ class CaDeer(object):
 
             self.current_pos_x = np.remainder(self.current_pos_x, self.length)
             self.current_pos_y = np.remainder(self.current_pos_y, self.width)
-            print("\rTime: {:.2f} ".format(t/time * 100), end="")
+            print("\rPathing: {:.2f} ".format(t / time * 100), end="")
 
-        print("\r100%")
+        print("\rPathing: 100%")
 
         if live_update:
             # used to end the video format
@@ -566,7 +563,7 @@ class CaDeer(object):
 
         if mpfour_output is not None:
             ani = animation.ArtistAnimation(fig, self.ims, interval=500, blit=True)
-            ani.save(mpfour_output+'.mp4', writer=writer)
+            ani.save(mpfour_output + '.mp4', writer=writer)
 
         self.output_world(self.world_color)
         self.path_map()
@@ -580,7 +577,8 @@ class CaDeer(object):
             terrain_path.append(self.names_dictionary[self.ca_world[x][y]])
             motilities_taken.append(self.motility_dictionary[self.ca_world[x][y]])
 
-        self.excel_write(path_taken=terrain_path, excel_output_name=self.output_excel_name, motilities_taken=motilities_taken)
+        self.excel_write(path_taken=terrain_path, excel_output_name=self.output_excel_name,
+                         motilities_taken=motilities_taken)
 
     def string_names(self):
         """ Appends the deer to the name array and returns a list of strings of the motility values.

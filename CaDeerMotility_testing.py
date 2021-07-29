@@ -1,19 +1,10 @@
 import timeit
 import numpy as np
-import pandas as pd
-from generation import CaDeer
+from CaDeerMotility import CaDeer
 
 
 def main():
     ca_test()
-
-
-def csv_test():
-    deer = CaDeer()
-    path = [.32, .2, .4, .6]
-    motility = ["nope", "nope", "yup", "yup"]
-    deer.excel_write(path_taken=path, excel_output_name="testOutput", motilities_taken=motility)
-    print("Yeet")
 
 
 def ca_test():
@@ -47,8 +38,8 @@ def ca_test():
     deer = CaDeer(scale=scale, octaves=octaves, features=15)
 
     # deer.excel_read("list_of_stuff.xlsx")
-    deer.gather_features("test_output", light_mode=False, input_excel_name="list_of_stuff.xlsx", color_range=color_range, colors=colors, motility_values=motility_values,
-                         terrain_names=names)
+    deer.gather_features("test_output", light_mode=False, input_excel_name="list_of_stuff.xlsx", color_range=color_range,
+                         colors=colors, motility_values=motility_values, terrain_names=names)
 
     # creating the world given the sizes and feature list
     deer.create_world(length=x, width=y)
@@ -66,24 +57,9 @@ def ca_test():
     deer.output_world(world=deer.ca_world, gray=True)
 
     # showing the CA pathing of the deer showing Live update and recording the path taken
-    deer.pathing(time=50000, live_update=True, mpfour_output="output")
+    deer.pathing(time=1000, live_update=False, mpfour_output="out")
 
     print("Done")
-
-
-def numpy_testing():
-    world = np.random.uniform(-1, 1, size=(10, 10))
-    color_range = np.array([-0.6, -0.2, 0, 0.2, 0.6, 1])
-    world = np.where(world < color_range[0], color_range[0], world)
-    print(world)
-    for i in range(1, color_range.size - 1):
-        print(i)
-        previous = color_range[i - 1]
-        print(previous)
-        current = color_range[i]
-        print(current)
-        world = np.where(previous < world < current, current, world)
-        print(world)
 
 
 if __name__ == "__main__":
