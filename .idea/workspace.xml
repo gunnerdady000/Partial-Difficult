@@ -3,9 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="286fdda9-4de7-458f-a101-5ff23133d335" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generation.py" beforeDir="false" afterPath="$PROJECT_DIR$/CaDeerMotility.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generation_testing.py" beforeDir="false" afterPath="$PROJECT_DIR$/CaDeerMotility_testing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/output.mp4" beforeDir="false" afterPath="$PROJECT_DIR$/output.mp4" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CaDeerMotility.py" beforeDir="false" afterPath="$PROJECT_DIR$/CaDeerMotility.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CaDeerMotility_testing.py" beforeDir="false" afterPath="$PROJECT_DIR$/CaDeerMotility_testing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/list_of_stuff.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/list_of_stuff.xlsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test_output.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/test_output.xlsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -29,6 +29,7 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../Skool/research" />
     <property name="settings.editor.selected.configurable" value="terminal" />
@@ -38,7 +39,28 @@
       <recent name="C:\Users\7380314\Documents\GitHub\Partial-Difficult" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.CaDeerMotility_testing">
+  <component name="RunManager" selected="Python.CaDeerMotility_testing (1)">
+    <configuration name="CaDeerMotility_testing (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Partial-Difficult" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/CaDeerMotility_testing.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="CaDeerMotility_testing" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Partial-Difficult" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -93,12 +115,14 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Python.CaDeerMotility_testing" />
       <item itemvalue="Python docs.Sphinx Task in Sphinx Task in " />
       <item itemvalue="Python docs.Sphinx Task in Sphinx Task in Sphinx Task in Sphinx Task in Sphinx Task in " />
-      <item itemvalue="Python.CaDeerMotility_testing" />
+      <item itemvalue="Python.CaDeerMotility_testing (1)" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.CaDeerMotility_testing (1)" />
         <item itemvalue="Python.CaDeerMotility_testing" />
       </list>
     </recent_temporary>
@@ -124,14 +148,15 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/CaDeerMotility.py</url>
-          <line>567</line>
-          <option name="timeStamp" value="110" />
+          <line>673</line>
+          <option name="timeStamp" value="116" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -56,33 +56,51 @@ class CaDeer(object):
 
     def excel_read(self, input_excel_file_name):
         """Used to gather names, motility values, colors, and color range from an excel file that is passed in by the
+        user. Values are checked to make certain that there are no NaN's which occur from having one or more of the
+        columns that does not match the length of the other columns.
 
         :param input_excel_file_name: File path of the Excel File
         :type input_excel_file_name: string
         """
 
         xl = pd.ExcelFile(input_excel_file_name)
-
+        default = False
         # get the data frame
         df = xl.parse(0, skiprows=0)
         data = df.values
 
         # gather names
         self.names = data[:, 0].tolist()
+        if any(type(x) is float for x in self.names):
+            default = True
+            print("Names column does not match the length of the other or contains a float. The default values have been set.")
 
         # gather motility
         self.motility_values = data[:, 1]
+        if np.isnan(np.sum(self.motility_values)):
+            default = True
+            print("Motility values column does not match the length of the other, default values have been set.")
 
         # gather RGB colors and
         colors = data[:, 2]
-        colors = np.asarray([colors[i].replace(' ', '') for i in range(colors.size)])
-        colors = np.asarray([np.fromstring(colors[i], dtype=int, sep=',') for i in range(colors.size)])
-        self.colors = colors
+        if any(type(x) is float for x in colors):
+            default = True
+            print("Colors column does not match the length of the other, default values have been set.")
+        else:
+            colors = np.asarray([colors[i].replace(' ', '') for i in range(colors.size)])
+            colors = np.asarray([np.fromstring(colors[i], dtype=int, sep=',') for i in range(colors.size)])
+            self.colors = colors
 
         # get the color range
         self.color_range = data[:, 3]
+        if np.isnan(np.sum(self.color_range)):
+            default = True
+            print("Color range column does not match the length of the other, default values have been set.")
 
-    def excel_write(self, path_taken, excel_output_name, motilities_taken):
+        if default:
+            self.default()
+
+    def excel_write(self, path_taken, excel_output_name, motilities_taken, axis_position):
         """Outputs pathing data that the deer took into an excel sheet showing the terrain name and the motility
         assigned to the terrain.
 
@@ -93,9 +111,11 @@ class CaDeer(object):
             :param motilities_taken: Motility values of each terrain feature that was taken by the deer throughout the
             simulation.
             :type motilities_taken: List
+            :param axis_position: List of axis positions.
+            :type axis_position: List
             """
 
-        df = pd.DataFrame({'Terrain': path_taken, 'Motility': motilities_taken})
+        df = pd.DataFrame({'Terrain': path_taken, 'Motility': motilities_taken, 'Axis Position': axis_position})
         writer = pd.ExcelWriter(excel_output_name + '.xlsx')
         df.to_excel(writer)
         writer.save()
@@ -194,9 +214,7 @@ class CaDeer(object):
         self.features = 5
 
         # default of 5 colors
-        self.colors = [[240 / 255, 230 / 255, 140 / 255], [65 / 255, 105 / 255, 225 / 255],
-                       [34 / 255, 139 / 255, 34 / 255],
-                       [139 / 255, 137 / 255, 137 / 255], [255 / 255, 250 / 255, 250 / 255]]
+        self.colors = [[240, 230, 140], [65, 105, 225], [34, 139, 34], [139, 137, 137], [255, 250, 250]]
 
         # default of 5 color ranges
         self.color_range = [-0.05, 0, 0.2, 0.36, 1]
@@ -578,7 +596,7 @@ class CaDeer(object):
             motilities_taken.append(self.motility_dictionary[self.ca_world[x][y]])
 
         self.excel_write(path_taken=terrain_path, excel_output_name=self.output_excel_name,
-                         motilities_taken=motilities_taken)
+                         motilities_taken=motilities_taken, axis_position=path_taken)
 
     def string_names(self):
         """ Appends the deer to the name array and returns a list of strings of the motility values.
@@ -661,11 +679,11 @@ class CaDeer(object):
                 change_apperent = self.world_color[i][j]
 
                 if self.light_mode:
-                    change_apperent[3] = np.abs(1 - change_apperent[3])
-                    self.world_color[i][j] = change_apperent
+                    if change_apperent[3] == 1:
+                        self.world_color[i][j] = [0, 0, 0, 1]
                 else:
                     if change_apperent[3] <= 0.1:
-                        change_apperent[3] = 0.0
+                        self.world_color[i][j] = [0, 0, 0, 1]
 
         plt.figure()
 

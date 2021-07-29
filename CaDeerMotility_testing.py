@@ -4,8 +4,8 @@ from CaDeerMotility import CaDeer
 
 
 def main():
+    #other_testing()
     ca_test()
-
 
 def ca_test():
     # size of the world
@@ -36,9 +36,9 @@ def ca_test():
 
     # creating and initializing the Cellar Autonoma of deer
     deer = CaDeer(scale=scale, octaves=octaves, features=15)
+    #deer = CaDeer(scale=scale, octaves=octaves, persistence=0.585, lacunarity=2.68, base=0, features=15)
 
-    # deer.excel_read("list_of_stuff.xlsx")
-    deer.gather_features("test_output", light_mode=False, input_excel_name="list_of_stuff.xlsx", color_range=color_range,
+    deer.gather_features("test_output", light_mode=False, input_excel_name="test_input.xlsx", color_range=color_range,
                          colors=colors, motility_values=motility_values, terrain_names=names)
 
     # creating the world given the sizes and feature list
@@ -57,9 +57,16 @@ def ca_test():
     deer.output_world(world=deer.ca_world, gray=True)
 
     # showing the CA pathing of the deer showing Live update and recording the path taken
-    deer.pathing(time=1000, live_update=False, mpfour_output="out")
+    deer.pathing(time=100000, live_update=False)
 
     print("Done")
+
+def other_testing():
+    names = ['Open space', 'Low Space', 'Med Space', 'barren', 'pasture', 'crops', 'sparse veg', 'open water',
+             'apline sparse', 'aspen', 'juniper', 'dry spruce', 'dry mixed', 'pine', 'mixed conifer']
+
+    if any(type(x) is float for x in names):
+        print("why")
 
 
 if __name__ == "__main__":
