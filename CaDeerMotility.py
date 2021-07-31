@@ -30,7 +30,7 @@ class CaDeer(object):
         :param features: Number of features to color and use in model. Must match the number of elements within the
         colors, color_range, feature_list, and names arrays. Default is 5, and will be used for all other functions
         to run the cellular automata.
-        :param features: int, optional
+        :type features: int, optional
     """
 
     def __init__(self, scale=100.0, octaves=6, persistence=None, lacunarity=None, base=None, features=5):
@@ -49,7 +49,8 @@ class CaDeer(object):
         self.persistence = persistence
         self.lacunarity = lacunarity
         self.base = base
-
+        self.starting_pos_x = None
+        self.starting_pos_y = None
         # used to get corrected grayscale
         color = cm.get_cmap('gray')
         self.cmap = color.reversed()
@@ -125,8 +126,10 @@ class CaDeer(object):
         """
 
         # starting values must not be on the edges of the world... for now
-        self.starting_pos_x = np.random.randint(1, self.length - 1)
-        self.starting_pos_y = np.random.randint(1, self.width - 1)
+        if self.starting_pos_x is None:
+            self.starting_pos_x = np.random.randint(1, self.length - 1)
+        if self.starting_pos_y is None:
+            self.starting_pos_y = np.random.randint(1, self.width - 1)
 
         # set current position to starting position
         self.current_pos_x = self.starting_pos_x
@@ -249,7 +252,7 @@ class CaDeer(object):
             :type motility_values: ndArray, optional
             :param terrain_names: Holds the names of the terrain that are used within the simulation. Must match the
             number of features.
-            :type terrain_names: string, optional
+            :type terrain_names: list, optional
             """
 
         # save string name for later
@@ -492,11 +495,11 @@ class CaDeer(object):
         :param time: Total amount of iterations to run the simulation
         :type time: int
         :param live_update: Determines if the simulation should be shown live
-        :type live_update: bool
-        :param encoding: Determines if the user wants to encode the
-        :type encoding: string
+        :type live_update: bool, optional
+        :param encoding: Determines if the user wants to encode the mp4 with a specific set of encoding instructions.
+        :type encoding: string, optional
         :param mpfour_output: Determines name and address of mp4 output
-        :type mpfour_output: string
+        :type mpfour_output: string, optional
         """
 
         # get starting positions
@@ -624,7 +627,7 @@ class CaDeer(object):
         :param world: Array of RGBA values that represent the world
         :type world: ndArray
         :param gray: Determines if the world should be shown in gray scale.
-        :type gray: bool
+        :type gray: bool, optional
 
         """
 

@@ -4,10 +4,82 @@ from CaDeerMotility import CaDeer
 
 
 def main():
-    #other_testing()
-    ca_test()
+    default_case()
+    advance_case()
+    hacking()
 
-def ca_test():
+
+def default_case():
+    # class initialization
+    deer = CaDeer()
+
+    # class function call, gather features
+    deer.gather_features("test_output")
+
+    # create the world, default size is 250 by 250
+    deer.create_world()
+
+    # optional call to output the world in black and white, while using a class variable
+    deer.output_world(deer.world, True)
+
+    # creates the color version of the world
+    deer.color_world()
+
+    # outputting the world in color after applying the color range values
+    deer.output_world(deer.world_color)
+
+    # outputting the grayscale version of the color world
+    deer.output_world(deer.ca_world, True)
+
+    # run the path finding algorithm
+    deer.pathing(10000)
+
+    print("Done, with Default Case")
+
+
+def advance_case():
+    # size of the world
+    x, y = 150, 150
+
+    # scaling of the world
+    scale = 100.0
+
+    # number of octaves
+    octaves = 8
+
+    # creating and initializing the Cellar Autonoma of deer
+    deer = CaDeer(scale=scale, octaves=octaves, persistence=0.585, lacunarity=2.68, base=0, features=15)
+
+    # collect the features from Excel
+    deer.gather_features("test_output", light_mode=False, color_range=None, input_excel_name="test_input.xlsx",
+                         colors=None, motility_values=None, terrain_names=None)
+
+    # creating the world given the sizes and feature list
+    deer.create_world(length=x, width=y)
+
+    # outputting the perlin noise world
+    deer.output_world(world=deer.world, gray=True)
+
+    # creates the color version of the world
+    deer.color_world()
+
+    # outputting the world in color after applying the color range values
+    deer.output_world(world=deer.world_color, gray=False)
+
+    # outputting the grayscale version of the color world
+    deer.output_world(world=deer.ca_world, gray=True)
+
+    # remove comments to specify a starting point, x and y are opposite of the built in cursor within the plot output
+    # deer.starting_pos_x = 71
+    # deer.starting_pos_y = 24
+
+    # showing the CA pathing of the deer showing Live update and recording the path taken
+    deer.pathing(time=100000, live_update=False, encoding=None, mpfour_output=None)
+
+    print("Done with Advance Case")
+
+
+def hacking():
     # size of the world
     x, y = 150, 150
 
@@ -35,12 +107,17 @@ def ca_test():
                             0.867, 1])
 
     # creating and initializing the Cellar Autonoma of deer
-    deer = CaDeer(scale=scale, octaves=octaves, features=15)
-    #deer = CaDeer(scale=scale, octaves=octaves, persistence=0.585, lacunarity=2.68, base=0, features=15)
+    deer = CaDeer(scale=scale, octaves=octaves, persistence=0.585, lacunarity=2.68, base=0, features=15)
 
-    deer.gather_features("test_output", light_mode=False, input_excel_name="test_input.xlsx", color_range=color_range,
+    # collect the features without the use of an excel file, because we know how to code
+    deer.gather_features("test_output", light_mode=False, color_range=color_range,
                          colors=colors, motility_values=motility_values, terrain_names=names)
 
+    # user could save or create a world to use by setting the following comment with a correct ndArray (you fill in)
+    # deer.world = (some ndArray)
+    # self.x = (length of ndArray)
+    # self.y = (length of ndArray)
+    # and comment out the deer.create_world()
     # creating the world given the sizes and feature list
     deer.create_world(length=x, width=y)
 
@@ -56,17 +133,14 @@ def ca_test():
     # outputting the grayscale version of the color world
     deer.output_world(world=deer.ca_world, gray=True)
 
+    # specify a starting point, x and y are opposite of the built in cursor within the plot output
+    deer.starting_pos_x = 71
+    deer.starting_pos_y = 24
+
     # showing the CA pathing of the deer showing Live update and recording the path taken
-    deer.pathing(time=100000, live_update=False)
+    deer.pathing(time=20000, live_update=False, encoding=None, mpfour_output="test_output_two")
 
     print("Done")
-
-def other_testing():
-    names = ['Open space', 'Low Space', 'Med Space', 'barren', 'pasture', 'crops', 'sparse veg', 'open water',
-             'apline sparse', 'aspen', 'juniper', 'dry spruce', 'dry mixed', 'pine', 'mixed conifer']
-
-    if any(type(x) is float for x in names):
-        print("why")
 
 
 if __name__ == "__main__":
