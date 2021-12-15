@@ -36,7 +36,7 @@
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../Skool/research" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -119,10 +119,10 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.CaDeerMotility_testing" />
-      <item itemvalue="Python docs.Sphinx Task in Sphinx Task in " />
-      <item itemvalue="Python docs.Sphinx Task in Sphinx Task in Sphinx Task in Sphinx Task in Sphinx Task in " />
       <item itemvalue="Python.CaDeerMotility_testing (1)" />
+      <item itemvalue="Python.CaDeerMotility_testing" />
+      <item itemvalue="Python docs.Sphinx Task in Sphinx Task in Sphinx Task in Sphinx Task in Sphinx Task in " />
+      <item itemvalue="Python docs.Sphinx Task in Sphinx Task in " />
     </list>
     <recent_temporary>
       <list>
